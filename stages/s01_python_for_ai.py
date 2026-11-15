@@ -8,6 +8,7 @@ import asyncio
 import os
 import random
 import time
+from typing import Literal
 
 from pydantic import BaseModel, Field, ValidationError
 
@@ -17,7 +18,7 @@ class SensorReading(BaseModel):
     tag: str = Field(pattern=r"^[A-Z]{2}_\d{3}$")   # e.g. TT_101
     value: float
     unit: str
-    quality: str = "GOOD"
+    quality: Literal["GOOD", "BAD", "UNCERTAIN"] = "GOOD"
 
 
 def demo_pydantic() -> None:
@@ -29,6 +30,11 @@ def demo_pydantic() -> None:
         print("invalid:", e.error_count(), "errors ->", [err["loc"][0] for err in e.errors()])
     # JSON in / JSON out: exactly what APIs and LLM structured outputs use
     print("json   :", ok.model_dump_json())
+    try:
+        SensorReading(tag="TT_101", value=37, unit="C", quality="BUENO")
+        print("ERROR: aceptó una calidad inválida")
+    except ValidationError:
+        print("OK: rechazó quality='BUENO'")
 
 
 # 2) Comprehensions and small pure functions --------------------------------------------------------
