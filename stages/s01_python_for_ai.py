@@ -52,15 +52,18 @@ def demo_env() -> None:
 
 
 # 4) Async: many slow I/O calls at the same time (this is how you call LLMs/APIs at scale) ----------
-async def fake_llm_call(i: int) -> str:
-    await asyncio.sleep(1)          # simulates network latency of an LLM / REST call
-    return f"answer {i}"
+async def fake_llm_call(i: int, sem: asyncio.Semaphore) -> str:
+    async with sem:                 # wait here until one of the "cashiers" is free
+        print(f"  call {i} started")
+        await asyncio.sleep(1)      # simulates network latency of an LLM / REST call
+        return f"answer {i}"
 
 
 async def demo_async() -> None:
+    sem = asyncio.Semaphore(5)      # max 3 calls at the same time
     t0 = time.perf_counter()
-    results = await asyncio.gather(*(fake_llm_call(i) for i in range(10)))
-    print(f"10 calls of 1 s each took {time.perf_counter() - t0:.1f} s in parallel ->", results[:3], "...")
+    results = await asyncio.gather(*(fake_llm_call(i, sem) for i in range(10)))
+    print(f"10 calls with max 3 at a time took {time.perf_counter() - t0:.1f} s ->", results[:3], "...")
 
 
 # 5) Retries with exponential backoff (LLM APIs fail and rate-limit: 429, 503...) ------------------
