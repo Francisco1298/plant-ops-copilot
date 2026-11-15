@@ -1,0 +1,40 @@
+# A small distributed system:
+#   nginx (load balancer) -> 2 stateless API replicas -> shared Chroma server (vector DB)
+# Start:  docker compose up --build        then open http://localhost:8080/docs
+services:
+  chroma:
+    image: chromadb/chroma:1.5.9
+    volumes: [chroma-data:/data]
+    ports: ["8001:8000"]
+
+  api:
+    build: .
+    env_file: .env
+    environment:
+      CHROMA_HOST: chroma          # the API talks to the vector DB over the network
+      CHROMA_PORT: "8000"
+      OLLAMA_HOST: http://host.docker.internal:11434   # only if you use Ollama on your PC
+    extra_hosts: ["host.docker.internal:host-gateway"]
+    depends_on: [chroma]
+    deploy:
+      replicas: 2                  # scale horizontally: docker compose up --scale api=4
+
+  nginx:
+    image: nginx:1.27-alpine
+    volumes: ["./infra/nginx/nginx.conf:/etc/nginx/nginx.conf:ro"]
+    ports: ["8080:80"]
+    depends_on: [api]
+
+  # One-off job: index the manuals into the shared Chroma server
+  #   docker compose run --rm indexer
+  indexer:
+    build: .
+    env_file: .env
+    environment: {CHROMA_HOST: chroma, CHROMA_PORT: "8000", OLLAMA_HOST: "http://host.docker.internal:11434"}
+    extra_hosts: ["host.docker.internal:host-gateway"]
+    command: ["python", "-c", "from app.rag import build_index; print(build_index(), 'chunks indexed')"]
+    depends_on: [chroma]
+    profiles: [jobs]
+
+volumes:
+  chroma-data:

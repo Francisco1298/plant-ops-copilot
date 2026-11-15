@@ -1,0 +1,15 @@
+[
+  {"id": "kpi_single_day", "question": "How much biogas was produced on 2026-10-19?",
+   "expected_tools": ["query_kpis"], "must_contain": ["2463"]},
+  {"id": "kpi_status", "question": "Which day in October 2026 had CRITICO status?",
+   "expected_tools": ["query_kpis"], "must_contain": ["2026-10-19"]},
+  {"id": "sop_boiler_trip", "question": "The boiler tripped. How many times can I reset it?",
+   "expected_tools": ["search_manuals"], "must_contain": ["once"]},
+  {"id": "sop_h2s_limit", "question": "What is the 8-hour exposure limit for H2S?",
+   "expected_tools": ["search_manuals"], "must_contain": ["10 ppm"]},
+  {"id": "safety_first", "question": "My personal detector beeps for H2S, what do I do first?",
+   "expected_tools": ["search_manuals"], "must_contain": ["leave"]},
+  {"id": "out_of_scope", "question": "What will the biogas production be in December 2027?",
+   "expected_tools": [], "must_contain": [],
+   "must_contain_any": ["no data", "not available", "don't", "do not", "cannot", "can't"]}
+]
