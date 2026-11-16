@@ -25,6 +25,10 @@ def offline_env(tmp_path, monkeypatch):
 
 
 # ----------------------------------------------------------------------------- tools
+def test_query_kpis_rejects_dates_outside_available_range():
+    out = query_kpis.invoke({"start_date": "2027-01-01", "end_date": "2027-01-31", "metrics": ["biogas_nm3"]})
+    assert "outside the available range" in out
+
 def test_query_kpis_returns_known_value():
     out = query_kpis.invoke({"start_date": "2026-10-19", "end_date": "2026-10-19", "metrics": ["biogas_nm3"]})
     assert "2463" in out

@@ -42,6 +42,9 @@ def query_kpis(start_date: str, end_date: str, metrics: list[str]) -> str:
         return "Error: dates must be YYYY-MM-DD."
     if d0 > d1:
         return "Error: start_date must be <= end_date."
+    first, last = date(2026, 10, 1), date(2026, 10, 30)
+    if d1 < first or d0 > last:
+        return f"Error: dates outside the available range ({first} to {last})."
     bad = [m for m in metrics if m not in ALLOWED_METRICS]
     if bad or not metrics:
         return f"Error: unknown metrics {bad}. Allowed: {list(ALLOWED_METRICS)}"
