@@ -16,6 +16,7 @@ REPORTS = [
     "Gas holder pressure 27 mbar and CHP engine stopped, flare not lit",
     "Feeding pump making noise but flow is normal",
     "Operator felt dizzy near the desulfurisation unit",
+    "Biogas production 8% lower than yesterday, no alarms active",
 ]
 
 PROMPT_V1 = "Classify this incident: {report}"
