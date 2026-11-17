@@ -19,3 +19,4 @@ pydantic-settings==2.16.3
 httpx==0.28.1
 # Dev
 pytest==9.2.0
+grandalf==0.8
