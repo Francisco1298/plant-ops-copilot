@@ -40,7 +40,10 @@ for doc, score in rag.search("what to do if the boiler trips", k=2):
 if s.llm_provider != "offline":
     retriever = rag.get_vector_store().as_retriever(search_kwargs={"k": 3})
     prompt = ChatPromptTemplate.from_template(
-        "Answer ONLY with the context. If it is not there, say you don't know. Cite [source].\n\n"
+
+        "Answer ONLY with the context. Cite the file name in brackets exactly as it appears "
+        "in the context, e.g. [sop_digester_temperature.md]. If the answer is not in the context, "
+        "reply only \"I don't know\" and do not cite any source.\n\n"        
         "Context:\n{context}\n\nQuestion: {question}")
     fmt = lambda docs: "\n\n".join(f"[{d.metadata['source']}]\n{d.page_content}" for d in docs)
     rag_chain = {"context": retriever | fmt, "question": RunnablePassthrough()} | prompt | get_chat_model() | StrOutputParser()
