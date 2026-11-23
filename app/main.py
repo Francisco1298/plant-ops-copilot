@@ -5,12 +5,13 @@ Run:  uvicorn app.main:app --reload
 Docs: http://localhost:8000/docs  (Swagger)   |   http://localhost:8000/graphql  (GraphiQL)
 """
 import logging
+import os
 import sqlite3
 from contextlib import asynccontextmanager
 from typing import Annotated
 
 import strawberry
-from fastapi import Depends, FastAPI, HTTPException, Query, Request
+from fastapi import Depends, FastAPI, HTTPException, Query, Request, Header
 from fastapi.concurrency import run_in_threadpool
 from strawberry.fastapi import GraphQLRouter
 
@@ -46,6 +47,13 @@ def get_copilot(request: Request) -> PlantCopilot:
 Copilot = Annotated[PlantCopilot, Depends(get_copilot)]
 
 
+def require_api_key(x_api_key: str | None = Header(default=None)):
+    """Simple API-key check. If API_KEY is not configured, the endpoint stays open (local development)."""
+    expected = os.getenv("API_KEY")
+    if expected and x_api_key != expected:
+        raise HTTPException(status_code=401, detail="Invalid or missing API key")
+
+
 def fetch_kpis(start: str, end: str) -> list[dict]:
     with sqlite3.connect(get_settings().warehouse_db) as con:
         con.row_factory = sqlite3.Row
@@ -60,7 +68,7 @@ def health():
     return {"status": "ok", "provider": get_settings().llm_provider}
 
 
-@app.post("/v1/ask", response_model=AskResponse, tags=["copilot"])
+@app.post("/v1/ask", response_model=AskResponse, tags=["copilot"], dependencies=[Depends(require_api_key)])
 async def ask(body: AskRequest, copilot: Copilot):
     # LLM calls are slow and blocking -> run in a worker thread so the event loop keeps serving requests.
     try:

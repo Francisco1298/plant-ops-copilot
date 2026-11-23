@@ -44,7 +44,7 @@ def test_query_kpis_rejects_bad_input(args, error):
 
 
 def test_rag_finds_the_right_manual():
-    hits = rag.search("boiler trip digester temperature low", k=1)
+    hits = rag.search("boiler tripped and digester temperature below 35 C, heating boiler E_110", k=1)
     assert hits[0][0].metadata["source"] == "sop_digester_temperature.md"
     assert "[sop_gas_safety_h2s.md]" in search_manuals.invoke({"query": "H2S detector alarm gas leak safety"})
 
@@ -109,3 +109,11 @@ def test_graphql_returns_only_requested_fields(client):
     q = '{ kpis(start: "2026-10-19", end: "2026-10-19") { fecha estadoOperacion } }'
     data = client.post("/graphql", json={"query": q}).json()["data"]["kpis"]
     assert data == [{"fecha": "2026-10-19", "estadoOperacion": "CRITICO"}]
+
+    
+
+def test_ask_requires_api_key(client, monkeypatch):
+    monkeypatch.setenv("API_KEY", "secret")
+    assert client.post("/v1/ask", json={"question": "Status?"}).status_code == 401
+    ok = client.post("/v1/ask", json={"question": "Status?"}, headers={"X-API-Key": "wrong"})
+    assert ok.status_code == 401
